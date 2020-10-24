@@ -1,5 +1,7 @@
 # SCUC
 
+![スクリーンショット](https://raw.githubusercontent.com/natade-jp/surveillance-camera-using-color/master/SCUC.png)
+
 色情報を用いた監視カメラ
 surveillance camera using color
 
