@@ -153,9 +153,9 @@ WINDOW_CAMERA_BG_CAPTURE_INIT = 0
 				cap_r		= 0.0
 				cap_g		= 0.0
 				cap_b		= 0.0
-				repeat cap_width
+				repeat cap_width, cap_x
 					pos_x = cnt
-					repeat cap_height
+					repeat cap_height, cap_y
 						pos_y = cnt
 						pget pos_x, pos_y
 						cap_r += ginfo_r
