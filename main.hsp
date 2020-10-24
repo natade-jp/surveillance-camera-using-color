@@ -145,10 +145,10 @@ WINDOW_CAMERA_BG_CAPTURE_INIT = 0
 		if(instr(CAP_POSITION, 0, ",") != -1) {
 			split CAP_POSITION, ",", results
 			if(stat >= 4) {
-				cap_x		= limit(int(results(0)), 0, CAMERA_SIZE_WIDTH)
-				cap_y		= limit(int(results(1)), 0, CAMERA_SIZE_HEIGHT)
-				cap_width	= limit(int(results(2)), 0, CAMERA_SIZE_WIDTH - cap_x)
-				cap_height	= limit(int(results(3)), 0, CAMERA_SIZE_HEIGHT - cap_y)
+				cap_x		= limit(int(results(0)), 0, CAMERA_SIZE_WIDTH - 1)
+				cap_y		= limit(int(results(1)), 0, CAMERA_SIZE_HEIGHT - 1)
+				cap_width	= limit(int(results(2)), 1, CAMERA_SIZE_WIDTH - cap_x)
+				cap_height	= limit(int(results(3)), 1, CAMERA_SIZE_HEIGHT - cap_y)
 				cap_size	= cap_width * cap_height
 				cap_r		= 0.0
 				cap_g		= 0.0
