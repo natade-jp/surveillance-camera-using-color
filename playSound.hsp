@@ -1,0 +1,89 @@
+/**
+	引数の音を再生する
+	playSound
+
+	【概要】
+	引数の音を再生する
+
+	【利用】
+	コマンドライン引数をUnicode(UTF-16)で受け取る (by なたで)
+	https://www.natade.net/lang/hsp/contents/sample_unicodecmdline.hsp
+*/
+
+#packopt type 1
+#packopt name "playSound"
+#packopt hide 1
+
+#include "user32.as"
+#include "gdi32.as"
+#include "kernel32.as"
+#include "shell32.as"
+
+#module
+
+#deffunc getUnicodeSize int ptr, local x, local size, local num
+	size = 0
+	repeat
+		dupptr x, ptr + cnt * 2, 4, vartype("int")
+		num = x & 0xffff
+		if(num == 0) {
+			break
+		}
+		size += 2
+	loop
+	return(size)
+
+#deffunc getUnicodeText int ptr,var text
+	getUnicodeSize ptr
+	dupptr text, ptr, stat, vartype("str")
+	return
+
+#deffunc printUnicode var text,local rect,local BMSCR
+	dim rect,4
+	lstrlenW varptr(text)
+	GetTextExtentPoint32W hdc, varptr(text), stat, varptr(rect)
+	mref BMSCR,96 + ginfo(3)
+	BMSCR(68) = rect(0)
+	BMSCR(69) = rect(1)
+	rect = ginfo(22), ginfo(23), ginfo(22) + ginfo(14), ginfo(23) + ginfo(15)
+	DrawTextW hdc, varptr(text), -1, varptr(rect), 0
+	redraw (BMSCR(19)!=1), ginfo(22), ginfo(23), ginfo(14), ginfo(15)
+	pos ginfo(22), ginfo(23) + ginfo(15)
+	return
+
+#deffunc printUnicodePtr int ptr,local text
+	getUnicodeText ptr, text
+	printUnicode text
+	return
+
+#deffunc initCommandLineArgs onexit
+	if(argsptrptr == 0) {
+		LocalFree argsptrptr
+	}
+	return
+
+#deffunc getCommandLineArgs array argsptr,local pNumArgs
+	initCommandLineArgs
+	GetCommandLineW
+	pNumArgs = 0
+	CommandLineToArgvW stat, varptr(pNumArgs)
+	argsptrptr = stat
+	dupptr argsptr, argsptrptr, 4 * pNumArgs, vartype("int")
+	return
+
+#global
+
+getCommandLineArgs argsptr
+getUnicodeText argsptr(1), text
+
+file = cnvwtos(text)
+
+exist file
+if(strsize == -1) {
+	dialog "[" + file + "]", 1, "ファイルが見つかりません。"
+	end
+}
+
+mmload file, 0, 2
+mmplay 0
+end

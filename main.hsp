@@ -1,0 +1,209 @@
+/**
+	色を用いた監視カメラ
+	Surveillance Camera Using Color
+
+	【概要】
+	指定したカメラの指定した範囲内の色が大きく変わったときに音を鳴らす
+
+	【参考】
+	"(HSP3) sample1 [BasicSample].hsp" (hspdsc.dll 付属サンプルスクリプト)
+
+	【利用】
+	hspdsc.dll (by inovia https://hsp.moe/)
+*/
+
+#packopt type 1
+#packopt name "SCUC"
+#packopt hide 1
+
+#include "hspdsc.as"
+
+#define WINDOW_START_WINDOW 0
+#define WINDOW_CONTROL 1
+
+#define WINDOW_CAMERA_PLAY 10
+#define WINDOW_CAMERA_BG_CAPTURE 11
+
+#define CAMERA_SIZE_WIDTH	160
+#define CAMERA_SIZE_HEIGHT	120
+
+#define INTERVAL_TIMER_SEC	2
+
+#ifndef CAMERA_MODULE_INIT
+#define CAMERA_MODULE_INIT 1
+dsc_Init
+
+WINDOW_CAMERA_BG_CAPTURE_INIT = 0
+
+#module
+
+#deffunc GetCameraList var devlist
+	sdim devlist, dsc_GetDeviceListSize()
+	dsc_GetDeviceList devlist
+	if(stat == 0) {
+		return -1
+	}
+	return 0
+
+#deffunc CameraInit int camera_id, local now_sel
+	now_sel = ginfo_sel
+	screen WINDOW_CAMERA_PLAY, 100, 100, 2, -ginfo_dispx, -ginfo_dispy
+	gsel WINDOW_CAMERA_PLAY, -1
+	dsc_SetActiveSel WINDOW_CAMERA_PLAY
+	dsc_Open camera_id, 0, 0, 0, 0
+	if(stat < 0) {
+		return -1
+	}
+	dsc_Play hwnd, 0, 0, 100, 100
+	if(stat < 0) {
+		return -1
+	}
+	gsel now_sel
+	return 0
+
+#deffunc CameraCapture int target_sel, int camera_width, int camera_height, local now_sel
+	now_sel = ginfo_sel
+	if(WINDOW_CAMERA_BG_CAPTURE_INIT == 0) {
+		screen WINDOW_CAMERA_BG_CAPTURE, dsc_CapX, dsc_CapY, 0, -ginfo_dispx, -ginfo_dispy
+		gsel WINDOW_CAMERA_BG_CAPTURE, -1
+		WINDOW_CAMERA_BG_CAPTURE_INIT = 1
+	} else {
+		gsel WINDOW_CAMERA_BG_CAPTURE
+	}
+	dsc_GetImage hdc, 0, 0, dsc_CapX, dsc_CapY
+	if(stat < 0) {
+		return -1
+	}
+	gsel target_sel
+	gzoom camera_width, camera_height, WINDOW_CAMERA_BG_CAPTURE, 0, 0, dsc_CapX, dsc_CapY, 0
+	gsel now_sel
+	return 0
+
+#global
+
+#endif
+
+*sub_main
+	screen WINDOW_START_WINDOW, 300, 40
+	title "SCUC - カメラを選択してください"
+
+	GetCameraList device_list
+	if(stat) {
+		dialog "カメラが見つかりません"
+		end
+	}
+	
+	objsize 300, 20
+	combox camera_id, 100, device_list
+	button "カメラを選択", *sub_select
+
+	gsel WINDOW_START_WINDOW, 2
+	stop
+
+*sub_select
+	gsel WINDOW_START_WINDOW , -1
+	CameraInit camera_id
+	if(stat) {
+		dialog "エラーが発生しました"
+		end
+	}
+	
+	screen WINDOW_CONTROL, 300, CAMERA_SIZE_HEIGHT + 20 * 9
+	gsel WINDOW_CONTROL, 2
+	title "SCUC"
+
+	pos 0, CAMERA_SIZE_HEIGHT
+	objsize 300, 20
+
+	sdim CAP_POSITION
+	CAP_POSITION = "10,10,32,32"
+	CAP_COLOR = ""
+	CAP_GET_DELTA = 0
+	CAP_SET_DELTA = 1000
+	
+	font "Meiryo UI", 16
+	mes "左上の位置とサイズをカンマ区切りで入力"
+	input CAP_POSITION
+	mes "取得した色の平均色"
+	input CAP_COLOR
+	CAP_COLOR_ID = stat
+	mes "前回との色の誤差"
+	input CAP_GET_DELTA
+	CAP_GET_DELTA_ID = stat
+	mes "判定誤差"
+	input CAP_SET_DELTA
+	button gosub "プロパティ", *sub_property
+
+	repeat
+		gsel WINDOW_CONTROL
+		redraw 0
+		color 
+		pos 0, 0
+		boxf 0, 0, CAMERA_SIZE_WIDTH, CAMERA_SIZE_HEIGHT
+		CameraCapture WINDOW_CONTROL, CAMERA_SIZE_WIDTH, CAMERA_SIZE_HEIGHT
+
+		if(instr(CAP_POSITION, 0, ",") != -1) {
+			split CAP_POSITION, ",", results
+			if(stat >= 4) {
+				cap_x		= limit(int(results(0)), 0, CAMERA_SIZE_WIDTH)
+				cap_y		= limit(int(results(1)), 0, CAMERA_SIZE_HEIGHT)
+				cap_width	= limit(int(results(2)), 0, CAMERA_SIZE_WIDTH - cap_x)
+				cap_height	= limit(int(results(3)), 0, CAMERA_SIZE_HEIGHT - cap_y)
+				cap_size	= cap_width * cap_height
+				cap_r		= 0.0
+				cap_g		= 0.0
+				cap_b		= 0.0
+				repeat cap_width
+					pos_x = cnt
+					repeat cap_height
+						pos_y = cnt
+						pget pos_x, pos_y
+						cap_r += ginfo_r
+						cap_g += ginfo_g
+						cap_b += ginfo_b
+					loop
+				loop
+				cap_r /= cap_size
+				cap_g /= cap_size
+				cap_b /= cap_size
+
+				if(init_color == 0) {
+					init_color = 1
+					cap_r_old = cap_r
+					cap_g_old = cap_g
+					cap_b_old = cap_b
+				} else {
+					delta_r = cap_r - cap_r_old
+					delta_g = cap_g - cap_g_old
+					delta_b = cap_b - cap_b_old
+					delta_color = delta_r * delta_r + delta_g * delta_g + delta_b * delta_b
+					cap_r_old = cap_r
+					cap_g_old = cap_g
+					cap_b_old = cap_b
+					CAP_GET_DELTA = int(delta_color)
+					objprm CAP_GET_DELTA_ID, CAP_GET_DELTA
+					if(delta_color > CAP_SET_DELTA) {
+						exec "alert.bat", 0
+					}
+				}
+				
+				CAP_COLOR = "" + int(cap_r) + ", " + int(cap_g) + ", " + int(cap_b) 
+				objprm CAP_COLOR_ID, CAP_COLOR
+				color 255, 255, 255
+				pos cap_x, cap_y
+				line cap_x + cap_width, cap_y
+				line cap_x + cap_width, cap_y + cap_height
+				line cap_x, cap_y + cap_height
+				line cap_x, cap_y
+			}
+		}
+
+		redraw 1
+		await INTERVAL_TIMER_SEC * 1000
+	loop
+	stop
+
+*sub_property
+	dsc_FilterProp hwnd, "Device Filter"
+	return
+
