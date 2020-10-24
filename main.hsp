@@ -5,6 +5,10 @@
 	【概要】
 	指定したカメラの指定した範囲内の色が大きく変わったときに音を鳴らす
 
+	【作成】
+	natade-jp
+	https://github.com/natade-jp
+
 	【参考】
 	"(HSP3) sample1 [BasicSample].hsp" (hspdsc.dll 付属サンプルスクリプト)
 

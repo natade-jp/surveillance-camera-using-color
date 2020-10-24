@@ -4,9 +4,13 @@
 
 	【概要】
 	引数の音を再生する
+	
+	【作成】
+	natade-jp
+	https://github.com/natade-jp
 
-	【利用】
-	コマンドライン引数をUnicode(UTF-16)で受け取る (by なたで)
+	【参考】
+	コマンドライン引数をUnicode(UTF-16)で受け取る
 	https://www.natade.net/lang/hsp/contents/sample_unicodecmdline.hsp
 */
 
