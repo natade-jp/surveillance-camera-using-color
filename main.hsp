@@ -44,7 +44,7 @@ WINDOW_CAMERA_BG_CAPTURE_INIT = 0
 #deffunc GetCameraList var devlist
 	sdim devlist, dsc_GetDeviceListSize()
 	dsc_GetDeviceList devlist
-	if(stat == 0) {
+	if((stat == 0) || (stat == -2)) {
 		return -1
 	}
 	return 0
@@ -185,6 +185,7 @@ WINDOW_CAMERA_BG_CAPTURE_INIT = 0
 					cap_g_old = cap_g
 					cap_b_old = cap_b
 					CAP_GET_DELTA = int(delta_color)
+					gsel WINDOW_CONTROL
 					objprm CAP_GET_DELTA_ID, CAP_GET_DELTA
 					if(delta_color > CAP_SET_DELTA) {
 						exec "alert.bat", 0
@@ -192,6 +193,7 @@ WINDOW_CAMERA_BG_CAPTURE_INIT = 0
 				}
 				
 				CAP_COLOR = "" + int(cap_r) + ", " + int(cap_g) + ", " + int(cap_b) 
+				gsel WINDOW_CONTROL
 				objprm CAP_COLOR_ID, CAP_COLOR
 				color 255, 255, 255
 				pos cap_x, cap_y
